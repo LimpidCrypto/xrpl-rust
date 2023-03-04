@@ -7,6 +7,7 @@ pub mod deposit_preauth;
 pub mod escrow_cancel;
 pub mod escrow_create;
 pub mod escrow_finish;
+pub mod exceptions;
 pub mod nftoken_accept_offer;
 pub mod nftoken_burn;
 pub mod nftoken_cancel_offer;
@@ -30,6 +31,7 @@ pub use check_cancel::*;
 pub use check_cash::*;
 pub use check_create::*;
 pub use deposit_preauth::*;
+pub use enable_amendment::*;
 pub use escrow_cancel::*;
 pub use escrow_create::*;
 pub use escrow_finish::*;
@@ -45,7 +47,23 @@ pub use payment_channel_claim::*;
 pub use payment_channel_create::*;
 pub use payment_channel_fund::*;
 pub use pseudo_transactions::*;
+pub use set_fee::*;
 pub use set_regular_key::*;
 pub use signer_list_set::*;
 pub use ticket_create::*;
 pub use trust_set::*;
+pub use unl_modify::*;
+
+use strum_macros::Display;
+
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub enum TransactionFlag {
+    AccountSet(AccountSetFlag),
+    NFTokenCreateOffer(NFTokenCreateOfferFlag),
+    NFTokenMint(NFTokenMintFlag),
+    OfferCreate(OfferCreateFlag),
+    Payment(PaymentFlag),
+    PaymentChannelClaim(PaymentChannelClaimFlag),
+    TrustSet(TrustSetFlag),
+    EnableAmendment(EnableAmendmentFlag),
+}

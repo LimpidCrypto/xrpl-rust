@@ -2,119 +2,87 @@
 
 use alloc::string::String;
 use serde::{Deserialize, Serialize};
-use strum_macros::Display;
+use thiserror_no_std::Error;
 
-#[derive(Debug, PartialEq, Display)]
-#[non_exhaustive]
-pub enum XRPLModelException {
-    InvalidICCannotBeXRP,
-    XRPLTransactionError(XRPLTransactionException),
-    XRPLRequestError(XRPLRequestException),
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum XRPLTransactionException {
-    AccountSetError(AccountSetException),
-    CheckCashError(CheckCashException),
-    DepositPreauthError(DepositPreauthException),
-    EscrowCreateError(EscrowCreateException),
-    EscrowFinishError(EscrowFinishException),
-    NFTokenAcceptOfferError(NFTokenAcceptOfferException),
-    NFTokenCancelOfferError(NFTokenCancelOfferException),
-    NFTokenCreateOfferError(NFTokenCreateOfferException),
-    NFTokenMintError(NFTokenMintException),
-    PaymentError(PaymentException),
-    SignerListSetError(SignerListSetException),
-    UNLModifyError(UNLModifyException),
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum AccountSetException {
-    InvalidTickSizeTooHigh { max: u32, found: u32 },
-    InvalidTickSizeTooLow { min: u32, found: u32 },
-    InvalidTransferRateTooHigh { max: u32, found: u32 },
-    InvalidTransferRateTooLow { min: u32, found: u32 },
-    InvalidDomainIsNotLowercase,
-    InvalidDomainTooLong { max: usize, found: usize },
-    InvalidClearFlagMustNotEqualSetFlag,
-    InvalidMustSetAsfAuthorizedNftokenMinterFlagToSetMinter,
-    InvalidNftokenMinterMustBeSetIfAsfAuthorizedNftokenMinterIsSet,
-    InvalidNftokenMinterMustNotBeSetIfAsfAuthorizedNftokenMinterIsUnset,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum CheckCashException {
-    InvalidMustSetAmountOrDeliverMin,
-    InvalidMustNotSetAmountAndDeliverMin,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum DepositPreauthException {
-    InvalidMustSetAuthorizeOrUnauthorize,
-    InvalidMustNotSetAuthorizeAndUnauthorize,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum EscrowCreateException {
-    InvalidCancelAfterMustNotBeBeforeFinishAfter,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum EscrowFinishException {
-    InvalidIfOneSetBothConditionAndFulfillmentMustBeSet,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum NFTokenAcceptOfferException {
-    InvalidMustSetEitherNftokenBuyOfferOrNftokenSellOffer,
-    InvalidBrokerFeeMustBeGreaterZero,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum NFTokenCancelOfferException {
-    InvalidMustIncludeOneNFTokenOffer,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum NFTokenCreateOfferException {
-    InvalidAmountMustBeGreaterZero,
-    InvalidDestinationMustNotEqualAccount,
-    InvalidOwnerMustBeSetForBuyOffer,
-    InvalidOwnerMustNotBeSetForSellOffer,
-    InvalidOwnerMustNotEqualAccount,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum NFTokenMintException {
-    InvalidIssuerMustNotEqualAccount,
-    InvalidTransferFeeTooHigh { max: u32, found: u32 },
-    InvalidURITooLong { max: usize, found: usize },
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum PaymentException {
-    InvalidXRPtoXRPPaymentsCannotContainPaths,
-    InvalidDestinationMustNotEqualAccountForXRPtoXRPPayments,
-    InvalidSendMaxMustBeSetForPartialPayments,
-    InvalidDeliverMinMustNotBeSetForNonPartialPayments,
-    InvalidSendMaxMustNotBeSetForXRPtoXRPNonPartialPayments,
-    InvalidSendMaxMustBeSetForExchanges,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum SignerListSetException {
-    InvalidMustNotSetSignerEntriesIfSignerListIsBeingDeleted,
-    InvalidSignerQuorumMustBeZeroIfSignerListIsBeingDeleted,
-    InvalidTooFewSignerEntries { min: usize, found: usize },
-    InvalidTooManySignerEntries { max: usize, found: usize },
-    InvalidAccountMustNotBeInSignerEntry,
-    InvalidMustBeLessOrEqualToSumOfSignerWeightInSignerEntries { max: u32, found: u32 },
-    InvalidAnAccountCanNotBeInSignerEntriesTwice,
-}
-
-#[derive(Debug, Clone, PartialEq, Display)]
-pub enum UNLModifyException {
-    InvalidUNLModifyDisablingMustBeOneOrTwo,
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub enum XrplModelException<'a> {
+    #[error("`{model_type:?}`: The value of `{field:?}` is too high (max {max:?}, found {found:?}). For more information see: {resource:?}")]
+    ValueTooHigh {
+        model_type: &'a str,
+        field: &'a str,
+        max: u32,
+        found: u32,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The value of `{field:?}` is too low (min {min:?}, found {found:?}). For more information see: {resource:?}")]
+    ValueTooLow {
+        model_type: &'a str,
+        field: &'a str,
+        min: u32,
+        found: u32,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The value of `{field:?}` cannot be empty. If the field is optional, define it to be `None`. For more information see: {resource:?}")]
+    ValueEmpty { field: &'a str, resource: &'a str },
+    #[error("The value of `{field1:?}` must not be identical to `{field2:?}`. For more information see: {resource:?}")]
+    ValuesIdentical {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The value of `{field1:?}` must not be greater than `{field2:?}`. For more information see: {resource:?}")]
+    ValueGreaterValue {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The value of `{field1:?}` must not be smaller than `{field2:?}`. For more information see: {resource:?}")]
+    ValueLowerValue {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The value of `{field:?}` has an invalid format (expected {format:?}, found {value:?}). For more information see: {resource:?}")]
+    ValueFormatInvalid {
+        model_type: &'a str,
+        field: &'a str,
+        value: &'a str,
+        format: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The field `{field1}` requiers field `{field2}` to be defined. For more information see: {resource:?}")]
+    FieldRequiresField {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error(
+        "`{model_type:?}`: The field `{field1:?}` is not allowed to be defined in combination with `{field2:?}`. For more information see: {resource:?}"
+    )]
+    IllegalFieldCombo {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: Define at least one field of `{field1:?}` and `{field2:?}`. For more information see: {resource:?}")]
+    DefineOneOf {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: Define exactly one field of `{field1:?}` and `{field2:?}`. For more information see: {resource:?}")]
+    DefineExactlyOneOf {
+        model_type: &'a str,
+        field1: &'a str,
+        field2: &'a str,
+        resource: &'a str,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Display)]
