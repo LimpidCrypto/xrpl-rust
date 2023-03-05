@@ -1,11 +1,14 @@
 use alloc::vec::Vec;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::models::{
-    exceptions::{CheckCashException, XRPLModelException, XRPLTransactionException},
-    model::Model,
-    Amount, CheckCashError, Memo, Signer, Transaction, TransactionType,
+use crate::{
+    models::{
+        exceptions::XrplModelException, model::Model, Amount, CheckCashError, Memo, Signer,
+        Transaction, TransactionType,
+    },
+    Err,
 };
 
 /// Cancels an unredeemed Check, removing it from the ledger without
@@ -110,12 +113,10 @@ impl<'a> Default for CheckCash<'a> {
 }
 
 impl<'a> Model for CheckCash<'a> {
-    fn get_errors(&self) -> Result<(), XRPLModelException> {
+    fn get_errors(&self) -> Result<()> {
         match self._get_amount_and_deliver_min_error() {
             Ok(_no_error) => Ok(()),
-            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                XRPLTransactionException::CheckCashError(error),
-            )),
+            Err(error) => Err(error),
         }
     }
 }
@@ -127,14 +128,19 @@ impl<'a> Transaction for CheckCash<'a> {
 }
 
 impl<'a> CheckCashError for CheckCash<'a> {
-    fn _get_amount_and_deliver_min_error(&self) -> Result<(), CheckCashException> {
-        match self.amount.is_none() && self.deliver_min.is_none() {
-            true => Err(CheckCashException::InvalidMustSetAmountOrDeliverMin),
-            false => match self.amount.is_some() && self.deliver_min.is_some() {
-                true => Err(CheckCashException::InvalidMustNotSetAmountAndDeliverMin),
-                false => Ok(()),
-            },
+    fn _get_amount_and_deliver_min_error(&self) -> Result<()> {
+        if (self.amount.is_none() && self.deliver_min.is_none())
+            || (self.amount.is_some() && self.deliver_min.is_some())
+        {
+            return Err!(XrplModelException::DefineExactlyOneOf {
+                model_type: stringify!(CheckCash),
+                field1: "amount",
+                field2: "deliver_min",
+                resource: ""
+            });
         }
+
+        Ok(())
     }
 }
 
@@ -178,10 +184,7 @@ impl<'a> CheckCash<'a> {
 
 #[cfg(test)]
 mod test_check_cash_error {
-    use crate::models::{
-        exceptions::{CheckCashException, XRPLModelException, XRPLTransactionException},
-        Amount, Model, TransactionType,
-    };
+    use crate::models::{exceptions::XrplModelException, Amount, Model, TransactionType};
 
     use alloc::borrow::Cow;
 
@@ -207,18 +210,24 @@ mod test_check_cash_error {
             amount: None,
             deliver_min: None,
         };
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::CheckCashError(
-                CheckCashException::InvalidMustSetAmountOrDeliverMin,
-            ));
+        let expected_error = XrplModelException::DefineExactlyOneOf {
+            model_type: stringify!(CheckCash),
+            field1: "amount",
+            field2: "deliver_min",
+            resource: "",
+        };
+
         assert_eq!(check_cash.validate(), Err(expected_error));
 
         check_cash.amount = Some(Amount::Xrp(Cow::Borrowed("1000000")));
         check_cash.deliver_min = Some(Amount::Xrp(Cow::Borrowed("100000")));
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::CheckCashError(
-                CheckCashException::InvalidMustNotSetAmountAndDeliverMin,
-            ));
+        let expected_error = XrplModelException::DefineExactlyOneOf {
+            model_type: stringify!(CheckCash),
+            field1: "amount",
+            field2: "deliver_min",
+            resource: "",
+        };
+
         assert_eq!(check_cash.validate(), Err(expected_error));
     }
 }
