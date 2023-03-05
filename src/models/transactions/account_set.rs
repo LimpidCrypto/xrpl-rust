@@ -1,4 +1,7 @@
+use crate::Err;
+
 use alloc::vec::Vec;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::skip_serializing_none;
@@ -11,11 +14,12 @@ use crate::{
         MIN_TRANSFER_RATE, SPECIAL_CASE_TRANFER_RATE,
     },
     models::{
-        exceptions::{AccountSetException, XRPLModelException, XRPLTransactionException},
-        model::Model,
-        AccountSetError, Flag, Memo, Signer, Transaction, TransactionType,
+        exceptions::XrplModelException, model::Model, AccountSetError, Flag, Memo, Signer,
+        Transaction, TransactionType,
     },
 };
+
+use super::{exceptions::XrplTransactionException, TransactionFlag};
 
 /// Transactions of the AccountSet type support additional values
 /// in the Flags field. This enum represents those options.
@@ -197,27 +201,17 @@ impl<'a> Default for AccountSet<'a> {
 }
 
 impl<'a> Model for AccountSet<'a> {
-    fn get_errors(&self) -> Result<(), XRPLModelException> {
+    fn get_errors(&self) -> Result<()> {
         match self._get_tick_size_error() {
-            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                XRPLTransactionException::AccountSetError(error),
-            )),
+            Err(error) => Err(error),
             Ok(_no_error) => match self._get_transfer_rate_error() {
-                Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                    XRPLTransactionException::AccountSetError(error),
-                )),
+                Err(error) => Err(error),
                 Ok(_no_error) => match self._get_domain_error() {
-                    Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                        XRPLTransactionException::AccountSetError(error),
-                    )),
+                    Err(error) => Err(error),
                     Ok(_no_error) => match self._get_clear_flag_error() {
-                        Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                            XRPLTransactionException::AccountSetError(error),
-                        )),
+                        Err(error) => Err(error),
                         Ok(_no_error) => match self._get_nftoken_minter_error() {
-                            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                                XRPLTransactionException::AccountSetError(error),
-                            )),
+                            Err(error) => Err(error),
                             Ok(_no_error) => Ok(()),
                         },
                     },
@@ -264,89 +258,142 @@ impl<'a> Transaction for AccountSet<'a> {
 }
 
 impl<'a> AccountSetError for AccountSet<'a> {
-    fn _get_tick_size_error(&self) -> Result<(), AccountSetException> {
-        match self.tick_size {
-            Some(tick_size) => match tick_size > MAX_TICK_SIZE {
-                true => Err(AccountSetException::InvalidTickSizeTooHigh {
+    fn _get_tick_size_error(&self) -> Result<()> {
+        if let Some(tick_size) = self.tick_size {
+            if tick_size > MAX_TICK_SIZE {
+                return Err!(XrplModelException::ValueTooHigh {
+                    model_type: stringify!(AccountSet),
+                    field: "tick_size",
                     max: 15,
                     found: tick_size,
-                }),
-                false => match tick_size < MIN_TICK_SIZE && tick_size != DISABLE_TICK_SIZE {
-                    true => Err(AccountSetException::InvalidTickSizeTooLow {
-                        min: 3,
-                        found: tick_size,
-                    }),
-                    false => Ok(()),
-                },
-            },
-            None => Ok(()),
-        }
-    }
-
-    fn _get_transfer_rate_error(&self) -> Result<(), AccountSetException> {
-        match self.transfer_rate {
-            Some(transfer_rate) => match transfer_rate > MAX_TRANSFER_RATE {
-                true => Err(AccountSetException::InvalidTransferRateTooHigh {
-                    max: MAX_TRANSFER_RATE,
-                    found: transfer_rate,
-                }),
-                false => match transfer_rate < MIN_TRANSFER_RATE
-                    && transfer_rate != SPECIAL_CASE_TRANFER_RATE
-                {
-                    true => Err(AccountSetException::InvalidTransferRateTooLow {
-                        min: MIN_TRANSFER_RATE,
-                        found: transfer_rate,
-                    }),
-                    false => Ok(()),
-                },
-            },
-            None => Ok(()),
-        }
-    }
-
-    fn _get_domain_error(&self) -> Result<(), AccountSetException> {
-        match self.domain {
-            Some(domain) => match domain.to_lowercase().as_str() != domain {
-                true => Err(AccountSetException::InvalidDomainIsNotLowercase),
-                false => match domain.len() > MAX_DOMAIN_LENGTH {
-                    true => Err(AccountSetException::InvalidDomainTooLong {
-                        max: MAX_DOMAIN_LENGTH,
-                        found: domain.len(),
-                    }),
-                    false => Ok(()),
-                },
-            },
-            None => Ok(()),
-        }
-    }
-
-    fn _get_clear_flag_error(&self) -> Result<(), AccountSetException> {
-        match self.clear_flag.as_ref() {
-            Some(_clear_flag) => match self.clear_flag == self.set_flag {
-                true => Err(AccountSetException::InvalidClearFlagMustNotEqualSetFlag),
-                false => Ok(()),
-            },
-            None => Ok(()),
-        }
-    }
-
-    fn _get_nftoken_minter_error(&self) -> Result<(), AccountSetException> {
-        match self.nftoken_minter {
-            Some(_nftoken_minter) => match self.set_flag.as_ref() {
-                Some(_set_flag) => Ok(()),
-                None => match self.clear_flag.as_ref() {
-                    Some(clear_flag) => match clear_flag {
-                        AccountSetFlag::AsfAuthorizedNFTokenMinter => Err(AccountSetException::InvalidNftokenMinterMustNotBeSetIfAsfAuthorizedNftokenMinterIsUnset),
-                        _ => Ok(()),
-                    }
-                    None => Err(AccountSetException::InvalidMustSetAsfAuthorizedNftokenMinterFlagToSetMinter),
-                },
-            },
-            None => match self.set_flag.as_ref() {
-                Some(_set_flag) => Err(AccountSetException::InvalidNftokenMinterMustBeSetIfAsfAuthorizedNftokenMinterIsSet),
-                None => Ok(()),
+                    resource: ""
+                });
+            }
+            if tick_size < MIN_TICK_SIZE {
+                return Err!(XrplModelException::ValueTooLow {
+                    model_type: stringify!(AccountSet),
+                    field: "tick_size",
+                    min: 1,
+                    found: tick_size,
+                    resource: "",
+                });
             }
         }
+
+        Ok(())
+    }
+
+    fn _get_transfer_rate_error(&self) -> Result<()> {
+        if let Some(transfer_rate) = self.transfer_rate {
+            if transfer_rate > MAX_TRANSFER_RATE {
+                return Err!(XrplModelException::ValueTooHigh {
+                    model_type: stringify!(AccountSet),
+                    field: "transfer_rate",
+                    max: MAX_TRANSFER_RATE,
+                    found: transfer_rate,
+                    resource: ""
+                });
+            }
+            if transfer_rate < MIN_TRANSFER_RATE && transfer_rate != SPECIAL_CASE_TRANFER_RATE {
+                return Err!(XrplModelException::ValueTooLow {
+                    model_type: stringify!(AccountSet),
+                    field: "transfer_rate",
+                    min: MIN_TRANSFER_RATE,
+                    found: transfer_rate,
+                    resource: "",
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    fn _get_domain_error(&self) -> Result<()> {
+        if let Some(domain) = self.domain {
+            if domain.to_lowercase().as_str() != domain {
+                return Err!(XrplModelException::ValueFormatInvalid {
+                    model_type: stringify!(AccountSet),
+                    field: "domain",
+                    value: domain,
+                    format: "lowercase",
+                    resource: ""
+                });
+            }
+            if domain.len() > MAX_DOMAIN_LENGTH {
+                return Err!(XrplModelException::ValueTooLong {
+                    model_type: stringify!(AccountSet),
+                    field: "domain",
+                    max: MAX_DOMAIN_LENGTH as u32,
+                    found: domain.len() as u32,
+                    resource: ""
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    fn _get_clear_flag_error(&self) -> Result<()> {
+        if self.clear_flag.is_some() && self.set_flag.is_some() && self.clear_flag == self.set_flag
+        {
+            return Err!(XrplModelException::ValuesIdentical {
+                model_type: stringify!(AccountSet),
+                field1: "clear_flag",
+                field2: "set_flag",
+                resource: ""
+            });
+        }
+
+        Ok(())
+    }
+
+    fn _get_nftoken_minter_error(&self) -> Result<()> {
+        if let Some(nftoken_minter) = self.nftoken_minter {
+            if self.set_flag.is_none() {
+                if let Some(clear_flag) = self.clear_flag {
+                    match clear_flag {
+                        AccountSetFlag::AsfAuthorizedNFTokenMinter => {
+                            return Err!(XrplTransactionException::IllegalFieldWithFlag {
+                                txn_type: stringify!(AccountSet),
+                                field: "clear_flag",
+                                flag: TransactionFlag::AccountSet(
+                                    AccountSetFlag::AsfAuthorizedNFTokenMinter
+                                ),
+                                resource: ""
+                            });
+                        }
+                        _ => {
+                            return Ok(());
+                        }
+                    };
+                }
+                return Err!(XrplTransactionException::FieldRequiresFlag {
+                    txn_type: stringify!(AccountSet),
+                    field: "set_flag",
+                    flag: TransactionFlag::AccountSet(AccountSetFlag::AsfAuthorizedNFTokenMinter),
+                    resource: ""
+                });
+            }
+        }
+        if let Some(set_flag) = self.set_flag {
+            match set_flag {
+                AccountSetFlag::AsfAuthorizedNFTokenMinter => {
+                    return Err!(XrplTransactionException::FlagRequiresField {
+                        txn_type: stringify!(AccountSet),
+                        flag: TransactionFlag::AccountSet(
+                            AccountSetFlag::AsfAuthorizedNFTokenMinter,
+                        ),
+                        field: "nftoken_minter",
+                        resource: "",
+                    });
+                }
+                _ => {
+                    return Ok(());
+                }
+            };
+        }
+
+        Ok(())
     }
 }
 
@@ -401,9 +448,13 @@ impl<'a> AccountSet<'a> {
 
 #[cfg(test)]
 mod test_account_set_errors {
-    use crate::models::{
-        exceptions::{AccountSetException, XRPLModelException, XRPLTransactionException},
-        AccountSetFlag, Model,
+    use crate::{
+        constants::{MAX_DOMAIN_LENGTH, MAX_TRANSFER_RATE, MIN_TRANSFER_RATE},
+        models::{
+            exceptions::XrplModelException,
+            transactions::{exceptions::XrplTransactionException, TransactionFlag},
+            AccountSetFlag, Model,
+        },
     };
 
     use super::AccountSet;
@@ -435,18 +486,26 @@ mod test_account_set_errors {
         };
         let tick_size_too_low = Some(2);
         account_set.tick_size = tick_size_too_low;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidTickSizeTooLow { min: 3, found: 2 },
-            ));
+        let expected_error = XrplModelException::ValueTooLow {
+            model_type: stringify!(AccountSet),
+            field: "tick_size",
+            min: 1,
+            found: account_set.tick_size.unwrap(),
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
 
         let tick_size_too_high = Some(16);
         account_set.tick_size = tick_size_too_high;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidTickSizeTooHigh { max: 15, found: 16 },
-            ));
+        let expected_error = XrplModelException::ValueTooHigh {
+            model_type: stringify!(AccountSet),
+            field: "tick_size",
+            max: 15,
+            found: account_set.tick_size.unwrap(),
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
     }
 
@@ -477,24 +536,26 @@ mod test_account_set_errors {
         };
         let tick_size_too_low = Some(999999999);
         account_set.transfer_rate = tick_size_too_low;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidTransferRateTooLow {
-                    min: 1000000000,
-                    found: 999999999,
-                },
-            ));
+        let expected_error = XrplModelException::ValueTooLow {
+            model_type: stringify!(AccountSet),
+            field: "transfer_rate",
+            min: MIN_TRANSFER_RATE,
+            found: account_set.transfer_rate.unwrap(),
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
 
         let tick_size_too_high = Some(2000000001);
         account_set.transfer_rate = tick_size_too_high;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidTransferRateTooHigh {
-                    max: 2000000000,
-                    found: 2000000001,
-                },
-            ));
+        let expected_error = XrplModelException::ValueTooHigh {
+            model_type: stringify!(AccountSet),
+            field: "transfer_rate",
+            max: MAX_TRANSFER_RATE,
+            found: account_set.transfer_rate.unwrap(),
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
     }
 
@@ -525,20 +586,25 @@ mod test_account_set_errors {
         };
         let domain_not_lowercase = Some("https://Example.com/");
         account_set.domain = domain_not_lowercase;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidDomainIsNotLowercase,
-            ));
+        let expected_error = XrplModelException::ValueFormatInvalid {
+            model_type: stringify!(AccountSet),
+            field: "domain",
+            value: account_set.domain.unwrap(),
+            format: "lowercase",
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
 
         let domain_too_long = Some("https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         account_set.domain = domain_too_long;
-        let expected_error = XRPLModelException::XRPLTransactionError(
-            XRPLTransactionException::AccountSetError(AccountSetException::InvalidDomainTooLong {
-                max: 256,
-                found: 270,
-            }),
-        );
+        let expected_error = XrplModelException::ValueTooLong {
+            model_type: stringify!(AccountSet),
+            field: "domain",
+            max: MAX_DOMAIN_LENGTH as u32,
+            found: account_set.domain.unwrap().len() as u32,
+            resource: "",
+        };
         assert_eq!(account_set.validate(), Err(expected_error));
     }
 
@@ -567,10 +633,13 @@ mod test_account_set_errors {
             tick_size: None,
             nftoken_minter: None,
         };
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidClearFlagMustNotEqualSetFlag,
-            ));
+        let expected_error = XrplModelException::ValuesIdentical {
+            model_type: stringify!(AccountSet),
+            field1: "clear_flag",
+            field2: "set_flag",
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
     }
 
@@ -600,27 +669,35 @@ mod test_account_set_errors {
             nftoken_minter: None,
         };
         account_set.nftoken_minter = Some("rLSn6Z3T8uCxbcd1oxwfGQN1Fdn5CyGujK");
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidMustSetAsfAuthorizedNftokenMinterFlagToSetMinter,
-            ));
+        let expected_error = XrplTransactionException::FieldRequiresFlag {
+            txn_type: stringify!(AccountSet),
+            field: "set_flag",
+            flag: TransactionFlag::AccountSet(AccountSetFlag::AsfAuthorizedNFTokenMinter),
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
 
         account_set.nftoken_minter = None;
         account_set.set_flag = Some(AccountSetFlag::AsfAuthorizedNFTokenMinter);
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidNftokenMinterMustBeSetIfAsfAuthorizedNftokenMinterIsSet,
-            ));
+        let expected_error = XrplTransactionException::FlagRequiresField {
+            txn_type: stringify!(AccountSet),
+            flag: TransactionFlag::AccountSet(AccountSetFlag::AsfAuthorizedNFTokenMinter),
+            field: "nftoken_minter",
+            resource: "",
+        };
+
         assert_eq!(account_set.validate(), Err(expected_error));
 
         account_set.set_flag = None;
         account_set.nftoken_minter = Some("rLSn6Z3T8uCxbcd1oxwfGQN1Fdn5CyGujK");
         account_set.clear_flag = Some(AccountSetFlag::AsfAuthorizedNFTokenMinter);
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::AccountSetError(
-                AccountSetException::InvalidNftokenMinterMustNotBeSetIfAsfAuthorizedNftokenMinterIsUnset,
-            ));
+        let expected_error = XrplTransactionException::IllegalFieldWithFlag {
+            txn_type: stringify!(AccountSet),
+            field: "clear_flag",
+            flag: TransactionFlag::AccountSet(AccountSetFlag::AsfAuthorizedNFTokenMinter),
+            resource: "",
+        };
         assert_eq!(account_set.validate(), Err(expected_error));
     }
 }

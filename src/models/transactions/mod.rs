@@ -54,7 +54,7 @@ pub use ticket_create::*;
 pub use trust_set::*;
 pub use unl_modify::*;
 
-use strum_macros::Display;
+use thiserror_no_std::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum TransactionFlag {

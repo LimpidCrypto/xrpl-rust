@@ -22,6 +22,14 @@ pub enum XrplModelException<'a> {
         found: u32,
         resource: &'a str,
     },
+    #[error("`{model_type:?}`: The value of `{field:?}` is too long (max length {max:?}, found {found:?}). For more information see: {resource:?}")]
+    ValueTooLong {
+        model_type: &'a str,
+        field: &'a str,
+        max: u32,
+        found: u32,
+        resource: &'a str,
+    },
     #[error("`{model_type:?}`: The value of `{field:?}` cannot be empty. If the field is optional, define it to be `None`. For more information see: {resource:?}")]
     ValueEmpty { field: &'a str, resource: &'a str },
     #[error("The value of `{field1:?}` must not be identical to `{field2:?}`. For more information see: {resource:?}")]

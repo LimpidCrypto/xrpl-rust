@@ -11,13 +11,6 @@ pub enum XrplTransactionException<'a> {
         flag: TransactionFlag,
         resource: &'a str,
     },
-    #[error("`{txn_type:?}`: The field `{field1:?}`  can not be combined with field `{field2:?}`. For more information see: {resource:?}")]
-    IllegalFieldWithField {
-        txn_type: &'a str,
-        field1: &'a str,
-        field2: &'a str,
-        resource: &'a str,
-    },
     #[error("`{txn_type:?}`: The flag `{flag1:?}` can not be combined with flag `{flag2:?}`. For more information see: {resource:?}")]
     IllegalFlagCombo {
         txn_type: &'a str,
@@ -39,23 +32,6 @@ pub enum XrplTransactionException<'a> {
         field: &'a str,
         resource: &'a str,
     },
-    // TransferRateTooHigh {
-    //     max: u32,
-    //     found: u32,
-    // },
-    // TransferRateTooLow {
-    //     min: u32,
-    //     found: u32,
-    // },
-    // DomainIsNotLowercase,
-    // DomainTooLong {
-    //     max: usize,
-    //     found: usize,
-    // },
-    // ClearFlagMustNotEqualSetFlag,
-    // MustSetAsfAuthorizedNftokenMinterFlagToSetMinter,
-    // NftokenMinterMustBeSetIfAsfAuthorizedNftokenMinterIsSet,
-    // NftokenMinterMustNotBeSetIfAsfAuthorizedNftokenMinterIsUnset,
 }
 
 #[derive(Debug, Clone, PartialEq, Display, Error)]
