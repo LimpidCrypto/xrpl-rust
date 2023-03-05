@@ -269,7 +269,7 @@ impl<'a> AccountSetError for AccountSet<'a> {
                     resource: ""
                 });
             }
-            if tick_size < MIN_TICK_SIZE {
+            if tick_size < MIN_TICK_SIZE && tick_size != DISABLE_TICK_SIZE {
                 return Err!(XrplModelException::ValueTooLow {
                     model_type: stringify!(AccountSet),
                     field: "tick_size",
