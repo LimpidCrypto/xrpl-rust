@@ -104,6 +104,13 @@ pub enum XrplModelException<'a> {
         context: &'a str,
         resource: &'a str,
     },
+    #[error("`{model_type:?}`: The optional field `{field:?}` is no allowed for {context:?}. For more informations see: {resource:?}")]
+    IllegalOption {
+        model_type: &'a str,
+        field: &'a str,
+        context: &'a str,
+        resource: &'a str,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Display)]
