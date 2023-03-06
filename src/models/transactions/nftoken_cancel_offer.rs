@@ -1,11 +1,14 @@
 use alloc::vec::Vec;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::models::{
-    exceptions::{NFTokenCancelOfferException, XRPLModelException, XRPLTransactionException},
-    model::Model,
-    Memo, NFTokenCancelOfferError, Signer, Transaction, TransactionType,
+use crate::{
+    models::{
+        exceptions::XrplModelException, model::Model, Memo, NFTokenCancelOfferError, Signer,
+        Transaction, TransactionType,
+    },
+    Err,
 };
 
 /// Cancels existing token offers created using NFTokenCreateOffer.
@@ -105,11 +108,9 @@ impl<'a> Default for NFTokenCancelOffer<'a> {
 }
 
 impl<'a> Model for NFTokenCancelOffer<'a> {
-    fn get_errors(&self) -> Result<(), XRPLModelException> {
+    fn get_errors(&self) -> Result<()> {
         match self._get_nftoken_offers_error() {
-            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                XRPLTransactionException::NFTokenCancelOfferError(error),
-            )),
+            Err(error) => Err(error),
             Ok(_no_error) => Ok(()),
         }
     }
@@ -122,11 +123,15 @@ impl<'a> Transaction for NFTokenCancelOffer<'a> {
 }
 
 impl<'a> NFTokenCancelOfferError for NFTokenCancelOffer<'a> {
-    fn _get_nftoken_offers_error(&self) -> Result<(), NFTokenCancelOfferException> {
-        match self.nftoken_offers.is_empty() {
-            true => Err(NFTokenCancelOfferException::InvalidMustIncludeOneNFTokenOffer),
-            false => Ok(()),
+    fn _get_nftoken_offers_error(&self) -> Result<()> {
+        if self.nftoken_offers.is_empty() {
+            return Err!(XrplModelException::ValueEmpty {
+                field: "nftoken_offers",
+                resource: ""
+            });
         }
+
+        Ok(())
     }
 }
 
@@ -168,10 +173,7 @@ impl<'a> NFTokenCancelOffer<'a> {
 mod test_nftoken_cancel_offer_error {
     use alloc::vec::Vec;
 
-    use crate::models::{
-        exceptions::{NFTokenCancelOfferException, XRPLModelException, XRPLTransactionException},
-        Model, TransactionType,
-    };
+    use crate::models::{exceptions::XrplModelException, Model, TransactionType};
 
     use super::NFTokenCancelOffer;
 
@@ -193,11 +195,11 @@ mod test_nftoken_cancel_offer_error {
             signers: None,
             nftoken_offers: Vec::new(),
         };
-        let expected_error = XRPLModelException::XRPLTransactionError(
-            XRPLTransactionException::NFTokenCancelOfferError(
-                NFTokenCancelOfferException::InvalidMustIncludeOneNFTokenOffer,
-            ),
-        );
+        let expected_error = XrplModelException::ValueEmpty {
+            field: "nftoken_offers",
+            resource: "",
+        };
+
         assert_eq!(nftoken_cancel_offer.validate(), Err(expected_error));
     }
 }
