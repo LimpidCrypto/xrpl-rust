@@ -126,6 +126,7 @@ impl<'a> NFTokenCancelOfferError for NFTokenCancelOffer<'a> {
     fn _get_nftoken_offers_error(&self) -> Result<()> {
         if self.nftoken_offers.is_empty() {
             return Err!(XrplModelException::ValueEmpty {
+                model_type: stringify!(NFTokenCancelOffer),
                 field: "nftoken_offers",
                 resource: ""
             });
@@ -196,6 +197,7 @@ mod test_nftoken_cancel_offer_error {
             nftoken_offers: Vec::new(),
         };
         let expected_error = XrplModelException::ValueEmpty {
+            model_type: stringify!(NFTokenCancelOffer),
             field: "nftoken_offers",
             resource: "",
         };

@@ -1,10 +1,13 @@
+use alloc::format;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::models::{
-    exceptions::{UNLModifyException, XRPLModelException, XRPLTransactionException},
-    model::Model,
-    Transaction, TransactionType, UNLModifyError,
+use crate::{
+    models::{
+        exceptions::XrplModelException, model::Model, Transaction, TransactionType, UNLModifyError,
+    },
+    Err,
 };
 
 /// See UNLModify:
@@ -59,11 +62,9 @@ pub struct UNLModify<'a> {
 }
 
 impl<'a> Model for UNLModify<'a> {
-    fn get_errors(&self) -> Result<(), XRPLModelException> {
+    fn get_errors(&self) -> Result<()> {
         match self._get_unl_modify_error() {
-            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                XRPLTransactionException::UNLModifyError(error),
-            )),
+            Err(error) => Err(error),
             Ok(_no_error) => Ok(()),
         }
     }
@@ -76,12 +77,19 @@ impl<'a> Transaction for UNLModify<'a> {
 }
 
 impl<'a> UNLModifyError for UNLModify<'a> {
-    fn _get_unl_modify_error(&self) -> Result<(), UNLModifyException> {
+    fn _get_unl_modify_error(&self) -> Result<()> {
         let possible_unlmodify_disabling: [u8; 2] = [0, 1];
-        match !possible_unlmodify_disabling.contains(&self.unlmodify_disabling) {
-            true => Err(UNLModifyException::InvalidUNLModifyDisablingMustBeOneOrTwo),
-            false => Ok(()),
+        if !possible_unlmodify_disabling.contains(&self.unlmodify_disabling) {
+            return Err!(XrplModelException::IllegalValue {
+                model_type: stringify!(UNLModify),
+                field: "unlmodify_disabling",
+                expected: "0, 1",
+                found: format!("{}", self.unlmodify_disabling).as_str(),
+                resource: ""
+            });
         }
+
+        Ok(())
     }
 }
 
@@ -115,10 +123,7 @@ impl<'a> UNLModify<'a> {
 
 #[cfg(test)]
 mod test_unl_modify_error {
-    use crate::models::{
-        exceptions::{UNLModifyException, XRPLModelException, XRPLTransactionException},
-        Model, TransactionType,
-    };
+    use crate::models::{exceptions::XrplModelException, Model, TransactionType};
 
     use super::UNLModify;
 
@@ -138,10 +143,13 @@ mod test_unl_modify_error {
             unlmodify_validator:
                 "ED6629D456285AE3613B285F65BBFF168D695BA3921F309949AFCD2CA7AFEC16FE",
         };
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::UNLModifyError(
-                UNLModifyException::InvalidUNLModifyDisablingMustBeOneOrTwo,
-            ));
+        let expected_error = XrplModelException::IllegalValue {
+            model_type: stringify!(UNLModify),
+            field: "unlmodify_disabling",
+            expected: "0, 1",
+            found: "3",
+            resource: "",
+        };
         assert_eq!(unl_modify.validate(), Err(expected_error));
     }
 }

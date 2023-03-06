@@ -1,17 +1,16 @@
 use alloc::borrow::Cow;
-use alloc::borrow::Cow::Borrowed;
 use alloc::vec::Vec;
+use anyhow::Result;
 use derive_new::new;
 use serde::{ser::SerializeMap, Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 use crate::{
     models::{
-        exceptions::{SignerListSetException, XRPLModelException, XRPLTransactionException},
-        model::Model,
-        Memo, Signer, SignerListSetError, Transaction, TransactionType,
+        exceptions::XrplModelException, model::Model, Memo, Signer, SignerListSetError,
+        Transaction, TransactionType,
     },
-    serialize_with_tag,
+    serialize_with_tag, Err,
 };
 
 serialize_with_tag! {
@@ -123,15 +122,11 @@ impl<'a> Default for SignerListSet<'a> {
 }
 
 impl<'a> Model for SignerListSet<'a> {
-    fn get_errors(&self) -> Result<(), XRPLModelException> {
+    fn get_errors(&self) -> Result<()> {
         match self._get_signer_entries_error() {
-            Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                XRPLTransactionException::SignerListSetError(error),
-            )),
+            Err(error) => Err(error),
             Ok(_no_error) => match self._get_signer_quorum_error() {
-                Err(error) => Err(XRPLModelException::XRPLTransactionError(
-                    XRPLTransactionException::SignerListSetError(error),
-                )),
+                Err(error) => Err(error),
                 Ok(_no_error) => Ok(()),
             },
         }
@@ -145,57 +140,89 @@ impl<'a> Transaction for SignerListSet<'a> {
 }
 
 impl<'a> SignerListSetError for SignerListSet<'a> {
-    fn _get_signer_entries_error(&self) -> Result<(), SignerListSetException> {
-        match self.signer_entries.as_ref() {
-            Some(signer_entries) => match self.signer_quorum == 0 {
-                true => Err(SignerListSetException::InvalidMustNotSetSignerEntriesIfSignerListIsBeingDeleted),
-                false => match signer_entries.is_empty() {
-                    true => Err(SignerListSetException::InvalidTooFewSignerEntries { min: 1, found: signer_entries.len() }),
-                    false => match signer_entries.len() > 8 {
-                        true => Err(SignerListSetException::InvalidTooManySignerEntries { max: 8, found: signer_entries.len() }),
-                        false => Ok(())
-                    },
-                },
-            },
-            None => Ok(())
+    fn _get_signer_entries_error(&self) -> Result<()> {
+        if let Some(signer_entries) = self.signer_entries {
+            if self.signer_quorum == 0 {
+                return Err!(XrplModelException::ValueZero {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_entries",
+                    resource: ""
+                });
+            }
+            if signer_entries.is_empty() {
+                return Err!(XrplModelException::ValueEmpty {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_entries",
+                    resource: ""
+                });
+            }
+            if signer_entries.len() > 8 {
+                return Err!(XrplModelException::ValueTooHigh {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_entries",
+                    max: 8,
+                    found: signer_entries.len() as u32,
+                    resource: ""
+                });
+            }
         }
+
+        Ok(())
     }
 
-    fn _get_signer_quorum_error(&self) -> Result<(), SignerListSetException> {
+    fn _get_signer_quorum_error(&self) -> Result<()> {
         let mut accounts = Vec::new();
         let mut signer_weight_sum: u32 = 0;
-        if self.signer_entries.is_some() {
-            for signer_entry in self.signer_entries.as_ref().unwrap() {
+        if let Some(signer_entries) = self.signer_entries {
+            for signer_entry in signer_entries {
                 accounts.push(&signer_entry.account);
                 let weight: u32 = signer_entry.signer_weight.into();
                 signer_weight_sum += weight;
             }
         }
+
         accounts.sort_unstable();
         let mut check_account = Vec::new();
         for account in accounts.clone() {
-            match &check_account.contains(&account) {
-                true => {
-                    return Err(
-                        SignerListSetException::InvalidAnAccountCanNotBeInSignerEntriesTwice,
-                    )
-                }
-                false => check_account.push(account),
+            if check_account.contains(&account) {
+                return Err!(XrplModelException::ItemDuplicate {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_entries",
+                    resource: ""
+                });
             }
+
+            check_account.push(account);
         }
-        match self.signer_entries.as_ref() {
-            Some(_signer_entries) => match accounts.contains(&&Borrowed(self.account)) {
-                true => Err(SignerListSetException::InvalidAccountMustNotBeInSignerEntry),
-                false => match self.signer_quorum > signer_weight_sum {
-                    true => Err(SignerListSetException::InvalidMustBeLessOrEqualToSumOfSignerWeightInSignerEntries { max: signer_weight_sum, found: self.signer_quorum }),
-                    false => Ok(())
-                },
-            },
-            None => match self.signer_quorum != 0 {
-                true => Err(SignerListSetException::InvalidSignerQuorumMustBeZeroIfSignerListIsBeingDeleted),
-                false => Ok(()),
+        if let Some(signer_entries) = self.signer_entries {
+            if accounts.contains(&&Cow::Borrowed(self.account)) {
+                return Err!(XrplModelException::IllegalItem {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_entries",
+                    illegal_value: "account",
+                    resource: ""
+                });
             }
+            if self.signer_quorum > signer_weight_sum {
+                return Err!(XrplModelException::ValueTooHigh {
+                    model_type: stringify!(SignerListSet),
+                    field: "signer_quorum",
+                    max: signer_weight_sum,
+                    found: self.signer_quorum,
+                    resource: ""
+                });
+            }
+        } else if self.signer_quorum != 0 {
+            return Err!(XrplModelException::ValueTooHigh {
+                model_type: stringify!(SignerListSet),
+                field: "signer_quorum",
+                max: 0,
+                found: self.signer_quorum,
+                resource: ""
+            });
         }
+
+        Ok(())
     }
 }
 
@@ -240,10 +267,7 @@ mod test_signer_list_set_error {
     use alloc::borrow::Cow::Borrowed;
     use alloc::vec;
 
-    use crate::models::{
-        exceptions::{SignerListSetException, XRPLModelException, XRPLTransactionException},
-        Model, TransactionType,
-    };
+    use crate::models::{Model, TransactionType};
 
     use super::*;
 
@@ -269,18 +293,24 @@ mod test_signer_list_set_error {
                 signer_weight: 2,
             }]),
         };
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidMustNotSetSignerEntriesIfSignerListIsBeingDeleted,
-            ));
+        let expected_error = XrplModelException::ValueZero {
+            model_type: stringify!(SignerListSet),
+            field: "signer_entries",
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
 
         signer_list_set.signer_quorum = 3;
         signer_list_set.signer_entries = None;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidSignerQuorumMustBeZeroIfSignerListIsBeingDeleted,
-            ));
+        let expected_error = XrplModelException::ValueTooHigh {
+            model_type: stringify!(SignerListSet),
+            field: "signer_quorum",
+            max: 0,
+            found: signer_list_set.signer_quorum,
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
     }
 
@@ -303,10 +333,12 @@ mod test_signer_list_set_error {
             signer_quorum: 3,
             signer_entries: Some(vec![]),
         };
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidTooFewSignerEntries { min: 1, found: 0 },
-            ));
+        let expected_error = XrplModelException::ValueEmpty {
+            model_type: stringify!(SignerListSet),
+            field: "signer_entries",
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
 
         signer_list_set.signer_entries = Some(vec![
@@ -347,10 +379,14 @@ mod test_signer_list_set_error {
                 signer_weight: 2,
             },
         ]);
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidTooManySignerEntries { max: 8, found: 9 },
-            ));
+        let expected_error = XrplModelException::ValueTooHigh {
+            model_type: stringify!(SignerListSet),
+            field: "signer_entries",
+            max: 8,
+            found: signer_list_set.signer_entries.unwrap().len() as u32,
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
 
         signer_list_set.signer_entries = Some(vec![
@@ -367,10 +403,13 @@ mod test_signer_list_set_error {
                 signer_weight: 2,
             },
         ]);
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidAccountMustNotBeInSignerEntry,
-            ));
+        let expected_error = XrplModelException::IllegalItem {
+            model_type: stringify!(SignerListSet),
+            field: "signer_entries",
+            illegal_value: "account",
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
 
         signer_list_set.signer_entries = Some(vec![SignerEntry {
@@ -378,10 +417,13 @@ mod test_signer_list_set_error {
             signer_weight: 3,
         }]);
         signer_list_set.signer_quorum = 10;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidMustBeLessOrEqualToSumOfSignerWeightInSignerEntries { max: 3, found: 10 },
-            ));
+        let expected_error = XrplModelException::ValueTooHigh {
+            model_type: stringify!(SignerListSet),
+            field: "signer_quorum",
+            max: 3,
+            found: 10,
+            resource: "",
+        };
         assert_eq!(signer_list_set.validate(), Err(expected_error));
 
         signer_list_set.signer_entries = Some(vec![
@@ -395,10 +437,12 @@ mod test_signer_list_set_error {
             },
         ]);
         signer_list_set.signer_quorum = 2;
-        let expected_error =
-            XRPLModelException::XRPLTransactionError(XRPLTransactionException::SignerListSetError(
-                SignerListSetException::InvalidAnAccountCanNotBeInSignerEntriesTwice,
-            ));
+        let expected_error = XrplModelException::ItemDuplicate {
+            model_type: stringify!(SignerListSet),
+            field: "signer_entries",
+            resource: "",
+        };
+
         assert_eq!(signer_list_set.validate(), Err(expected_error));
     }
 }

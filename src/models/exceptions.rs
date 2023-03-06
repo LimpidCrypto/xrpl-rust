@@ -31,7 +31,11 @@ pub enum XrplModelException<'a> {
         resource: &'a str,
     },
     #[error("`{model_type:?}`: The value of `{field:?}` cannot be empty. If the field is optional, define it to be `None`. For more information see: {resource:?}")]
-    ValueEmpty { field: &'a str, resource: &'a str },
+    ValueEmpty {
+        model_type: &'a str,
+        field: &'a str,
+        resource: &'a str,
+    },
     #[error("The value of `{field1:?}` must not be identical to `{field2:?}`. For more information see: {resource:?}")]
     ValuesIdentical {
         model_type: &'a str,
@@ -109,6 +113,27 @@ pub enum XrplModelException<'a> {
         model_type: &'a str,
         field: &'a str,
         context: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The field `{field:?}` has a duplicate item in it. For more informations see: {resource:?}")]
+    ItemDuplicate {
+        model_type: &'a str,
+        field: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The field `{field:?}` contains an item which is not allowed (`{illegal_value:?}`). For more informations see: {resource:?}")]
+    IllegalItem {
+        model_type: &'a str,
+        field: &'a str,
+        illegal_value: &'a str,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The field `{field:?}` has an invalid value. (expected {expected:?}, found {found:?}) For more informations see: {resource:?}")]
+    IllegalValue {
+        model_type: &'a str,
+        field: &'a str,
+        expected: &'a str,
+        found: &'a str,
         resource: &'a str,
     },
 }
