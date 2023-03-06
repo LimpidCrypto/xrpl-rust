@@ -91,11 +91,17 @@ pub enum XrplModelException<'a> {
         field2: &'a str,
         resource: &'a str,
     },
-    #[error("`{model_type:?}`: The field `{field:?}` must not be zero (found {found:?}). For more information see: {resource:?}")]
+    #[error("`{model_type:?}`: The field `{field:?}` must not be zero. For more information see: {resource:?}")]
     ValueZero {
         model_type: &'a str,
         field: &'a str,
-        found: u32,
+        resource: &'a str,
+    },
+    #[error("`{model_type:?}`: The optional field `{field:?}` is required for {context:?}. For more informations see: {resource:?}")]
+    OptionRequired {
+        model_type: &'a str,
+        field: &'a str,
+        context: &'a str,
         resource: &'a str,
     },
 }

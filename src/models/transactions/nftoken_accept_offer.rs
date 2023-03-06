@@ -150,7 +150,6 @@ impl<'a> NFTokenAcceptOfferError for NFTokenAcceptOffer<'a> {
                 return Err!(XrplModelException::ValueZero {
                     model_type: stringify!(NFTokenAcceptOffer),
                     field: "nftoken_broker_fee",
-                    found: nftoken_broker_fee.get_value_as_u32(),
                     resource: ""
                 });
             }
@@ -259,10 +258,6 @@ mod test_nftoken_accept_offer_error {
         let expected_error = XrplModelException::ValueZero {
             model_type: stringify!(NFTokenAcceptOffer),
             field: "nftoken_broker_fee",
-            found: nftoken_accept_offer
-                .nftoken_broker_fee
-                .unwrap()
-                .get_value_as_u32(),
             resource: "",
         };
 
