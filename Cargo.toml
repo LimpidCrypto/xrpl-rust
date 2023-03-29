@@ -54,16 +54,27 @@ serde_json = { version = "1.0.68", default-features = false, features = [
 serde_with = "1.11.0"
 serde_repr = "0.1"
 zeroize = "1.5.7"
-tokio = { version = "1.20.1", features = ["full"] }
-tokio-tungstenite = { version = "0.17.2", features = ["native-tls"] }
-futures = "0.3.21"
-futures-channel = "0.3.21"
-futures-util = "0.3.21"
 hashbrown = { version = "0.13.2", default-features = false, features = ["serde"] }
 fnv = { version = "1.0.7", default-features = false }
 derive-new = { version = "0.5.9", default-features = false }
 thiserror-no-std = "2.0.2"
 anyhow = { version ="1.0.69", default-features = false }
+embedded-websocket = "0.8.0"
+embedded-tls = "0.12.0"
+reqwless = "0.5.0"
+tokio = { version = "1.27.0", default-features = false, features = ["net"], optional = true }
+tokio-rustls = { version = "0.23.4", optional = true }
+
+[dependencies.embassy-net]
+git = "https://github.com/embassy-rs/embassy"
+package = "embassy-net"
+version = "0.1.0"
+features = ["nightly", "tcp", "medium-ethernet", "dhcpv4", "unstable-traits"]
+
+[dependencies.embassy-net-driver]
+git = "https://github.com/embassy-rs/embassy"
+package = "embassy-net-driver"
+version = "0.1.0"
 
 [dev-dependencies]
 criterion = "0.3.5"
@@ -76,8 +87,9 @@ name = "benchmarks"
 harness = false
 
 [features]
-default = ["std", "core", "models", "utils"]
+default = ["std", "core", "models", "utils", "net"]
+net = ["models"]
 models = ["core"]
 core = ["utils"]
 utils = []
-std = ["rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
+std = ["tokio", "tokio-rustls", "rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
