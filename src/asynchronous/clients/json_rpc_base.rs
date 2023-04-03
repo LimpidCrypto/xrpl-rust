@@ -1,2 +1,2 @@
-/// A common interface for JsonRpc requests.
-pub trait JsonRpcBase {}
+// /// A common interface for JsonRpc requests.
+// pub trait JsonRpcBase {}
