@@ -9,7 +9,7 @@ mod framed;
 pub use decoder::Decoder;
 pub use encoder::Encoder;
 pub use exceptions::CodecException;
-pub use framed::Framed;
+// pub use framed;
 
 pub struct Codec(());
 

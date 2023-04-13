@@ -70,6 +70,7 @@ heapless = "0.7.16"
 bytes = { version = "1.4.0", default-features = false }
 embedded-io = { version = "0.4.0", features = ["async"] }
 pin-project-lite = "0.2.9"
+libc = "0.2.140"
 
 [dependencies.embedded-websocket]
 # git version needed to use `framer_async`
@@ -111,8 +112,9 @@ harness = false
 
 [features]
 default = ["std", "core", "models", "utils", "net"]
+dev = ["core", "models", "utils", "net"]
 net = ["models"]
 models = ["core"]
 core = ["utils"]
 utils = []
-std = ["tokio", "embedded-websocket/std", "async-std", "tokio-rustls", "tokio-util", "rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
+std = ["tokio", "embedded-websocket/std", "async-std", "tokio-rustls", "tokio-util/codec", "rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
