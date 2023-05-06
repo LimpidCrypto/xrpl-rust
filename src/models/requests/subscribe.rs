@@ -1,8 +1,9 @@
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use strum_macros::Display;
 
-use crate::models::{currency::Currency, default_false, Model, RequestMethod, StreamParameter};
+use crate::models::{currency::Currency, default_false, requests::RequestMethod, Model};
 
 /// Format for elements in the `books` array for Subscribe only.
 ///
@@ -10,7 +11,7 @@ use crate::models::{currency::Currency, default_false, Model, RequestMethod, Str
 /// `<https://xrpl.org/subscribe.html#subscribe>`
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all(serialize = "PascalCase", deserialize = "snake_case"))]
-pub struct Book<'a> {
+pub struct SubscribeBook<'a> {
     pub taker_gets: Currency<'a>,
     pub taker_pays: Currency<'a>,
     pub taker: &'a str,
@@ -18,6 +19,21 @@ pub struct Book<'a> {
     pub snapshot: Option<bool>,
     #[serde(default = "default_false")]
     pub both: Option<bool>,
+}
+
+/// Represents possible values of the streams query param
+/// for subscribe.
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize, Display)]
+#[serde(rename_all = "snake_case")]
+pub enum StreamParameter {
+    Consensus,
+    Ledger,
+    Manifests,
+    PeerStatus,
+    Transactions,
+    TransactionsProposed,
+    Server,
+    Validations,
 }
 
 /// The subscribe method requests periodic notifications
@@ -34,7 +50,7 @@ pub struct Subscribe<'a> {
     pub id: Option<&'a str>,
     /// Array of objects defining order books  to monitor for
     /// updates, as detailed below.
-    pub books: Option<Vec<Book<'a>>>,
+    pub books: Option<Vec<SubscribeBook<'a>>>,
     /// Array of string names of generic streams to subscribe to.
     pub streams: Option<Vec<StreamParameter>>,
     /// Array with the unique addresses of accounts to monitor
@@ -79,7 +95,7 @@ impl<'a> Model for Subscribe<'a> {}
 impl<'a> Subscribe<'a> {
     fn new(
         id: Option<&'a str>,
-        books: Option<Vec<Book<'a>>>,
+        books: Option<Vec<SubscribeBook<'a>>>,
         streams: Option<Vec<StreamParameter>>,
         accounts: Option<Vec<&'a str>>,
         accounts_proposed: Option<Vec<&'a str>>,

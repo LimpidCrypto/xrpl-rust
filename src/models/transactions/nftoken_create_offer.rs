@@ -10,11 +10,13 @@ use strum_macros::{AsRefStr, Display, EnumIter};
 use alloc::string::ToString;
 
 use crate::models::{
-    model::Model, Flag, Memo, NFTokenCreateOfferError, Signer, Transaction, TransactionType,
+    model::Model,
+    transactions::{Flag, Memo, Signer, Transaction, TransactionType},
 };
 
 use crate::Err;
 use crate::_serde::txn_flags;
+use crate::models::amount::exceptions::XRPLAmountException;
 use crate::models::amount::{Amount, XRPAmount};
 use crate::models::transactions::XRPLNFTokenCreateOfferException;
 
@@ -180,19 +182,26 @@ impl<'a> Transaction for NFTokenCreateOffer<'a> {
 }
 
 impl<'a> NFTokenCreateOfferError for NFTokenCreateOffer<'a> {
-    fn _get_amount_error(&self) -> Result<(), XRPLNFTokenCreateOfferException> {
-        // TODO: handle `rust_decimal` error
-        let amount: Decimal = self.amount.clone().try_into().unwrap();
-        if !self.has_flag(&Flag::NFTokenCreateOffer(
-            NFTokenCreateOfferFlag::TfSellOffer,
-        )) && amount.is_zero()
-        {
-            Err(XRPLNFTokenCreateOfferException::ValueZero {
-                field: "amount",
-                resource: "",
-            })
-        } else {
-            Ok(())
+    fn _get_amount_error(&self) -> Result<()> {
+        let amount_into_decimal: Result<Decimal, XRPLAmountException> =
+            self.amount.clone().try_into();
+        match amount_into_decimal {
+            Ok(amount) => {
+                if !self.has_flag(&Flag::NFTokenCreateOffer(
+                    NFTokenCreateOfferFlag::TfSellOffer,
+                )) && amount.is_zero()
+                {
+                    Err!(XRPLNFTokenCreateOfferException::ValueZero {
+                        field: "amount",
+                        resource: "",
+                    })
+                } else {
+                    Ok(())
+                }
+            }
+            Err(decimal_error) => {
+                Err!(decimal_error)
+            }
         }
     }
 
@@ -288,6 +297,12 @@ impl<'a> NFTokenCreateOffer<'a> {
     }
 }
 
+pub trait NFTokenCreateOfferError {
+    fn _get_amount_error(&self) -> Result<()>;
+    fn _get_destination_error(&self) -> Result<(), XRPLNFTokenCreateOfferException>;
+    fn _get_owner_error(&self) -> Result<(), XRPLNFTokenCreateOfferException>;
+}
+
 #[cfg(test)]
 mod test_nftoken_create_offer_error {
     use alloc::string::ToString;
@@ -295,10 +310,10 @@ mod test_nftoken_create_offer_error {
 
     use crate::models::{
         amount::{Amount, XRPAmount},
-        Model, NFTokenCreateOfferFlag, TransactionType,
+        Model,
     };
 
-    use super::NFTokenCreateOffer;
+    use super::*;
 
     #[test]
     fn test_amount_error() {
