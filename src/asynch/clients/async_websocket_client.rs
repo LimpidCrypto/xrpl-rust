@@ -14,7 +14,7 @@ mod if_std {
     use core::cell::RefCell;
     use core::task::Context;
     use em_as_net::client::websocket::WebsocketClient;
-    
+
     use rand::rngs::ThreadRng;
     use tokio::net;
 
