@@ -4,7 +4,6 @@ pub mod async_websocket_client;
 mod client;
 pub mod exceptions;
 mod json_rpc_base;
-mod net;
 mod websocket_base;
 
 pub use async_json_rpc_client::*;
