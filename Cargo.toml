@@ -59,6 +59,13 @@ fnv = { version = "1.0.7", default-features = false }
 derive-new = { version = "0.5.9", default-features = false }
 thiserror-no-std = "2.0.2"
 anyhow = { version ="1.0.69", default-features = false }
+tokio = { version = "1.28.0", default-features = false, optional = true }
+
+[dependencies.em-as-net]
+git = "https://github.com/LimpidCrypto/em-as-net"
+package = "em-as-net"
+default-features = false
+optional = true
 
 [dev-dependencies]
 criterion = "0.4.0"
@@ -78,6 +85,7 @@ requests = ["core", "amounts", "currencies"]
 ledger = ["core", "amounts", "currencies"]
 amounts = ["core"]
 currencies = ["core"]
+unstable-net = ["em-as-net/std"]
 core = ["utils"]
 utils = []
-std = ["rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
+std = ["tokio/net", "rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
