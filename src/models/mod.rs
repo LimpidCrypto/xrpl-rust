@@ -30,7 +30,6 @@ pub use model::Model;
 use crate::models::currency::{Currency, XRP};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
-use crate::core::types::Currency;
 
 /// Represents the object types that an AccountObjects
 /// Request can ask for.
@@ -61,7 +60,7 @@ pub struct PathStep<'a> {
 }
 
 /// Returns a Currency as XRP for the currency, without a value.
-fn default_xrp_currency<'a>() -> Currency {
+fn default_xrp_currency<'a>() -> Currency<'a> {
     Currency::XRP(XRP::new())
 }
 
