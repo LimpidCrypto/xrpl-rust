@@ -137,7 +137,7 @@ impl<'a> NFTokenCancelOfferError for NFTokenCancelOffer<'a> {
 }
 
 impl<'a> NFTokenCancelOffer<'a> {
-    fn new(
+    pub fn new(
         account: &'a str,
         nftoken_offers: Vec<&'a str>,
         fee: Option<XRPAmount<'a>>,

@@ -139,7 +139,7 @@ impl<'a> DepositPreauthError for DepositPreauth<'a> {
 }
 
 impl<'a> DepositPreauth<'a> {
-    fn new(
+    pub fn new(
         account: &'a str,
         fee: Option<XRPAmount<'a>>,
         sequence: Option<u32>,

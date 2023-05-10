@@ -385,7 +385,7 @@ impl<'a> AccountSetError for AccountSet<'a> {
 }
 
 impl<'a> AccountSet<'a> {
-    fn new(
+    pub fn new(
         account: &'a str,
         fee: Option<XRPAmount<'a>>,
         sequence: Option<u32>,

@@ -259,7 +259,7 @@ impl<'a> PaymentError for Payment<'a> {
 }
 
 impl<'a> Payment<'a> {
-    fn new(
+    pub fn new(
         account: &'a str,
         amount: Amount<'a>,
         destination: &'a str,
