@@ -4,8 +4,8 @@ use anyhow::Result;
 use serde::Serialize;
 
 /// Interface for all async network clients to follow.
-pub trait AsyncClient<'a, T: Model + Serialize, R>: Client<'a, T, R> {
-    async fn request(&'a mut self, request: T) -> Result<R> {
+pub trait AsyncClient<'a>: Client<'a> {
+    async fn request<T: Model + Serialize, R>(&mut self, request: T) -> Result<R> {
         self.request_impl(request).await
     }
 }
