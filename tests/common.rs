@@ -1,12 +1,12 @@
-use std::borrow::Cow;
 use xrpl::asynch::clients::{AsyncWebsocketClient, ReadResult, Websocket};
 use xrpl::models::requests::AccountInfo;
 
 #[tokio::test]
-async fn test_websocket() {
+async fn test_async_ws() {
     let mut buffer = [0u8; 4096];
-    let uri = Cow::from("ws://limpidcrypto.de:6004");
-    let mut ws = AsyncWebsocketClient::new(uri, &mut buffer);
+    let uri = "ws://limpidcrypto.de:6004";
+    let mut ws = AsyncWebsocketClient::new(uri.into(), &mut buffer);
+
     // connect
     ws.open().await.unwrap();
     // send request

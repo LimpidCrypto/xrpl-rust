@@ -1,7 +1,5 @@
 use crate::asynch::clients::client::Client;
-use crate::asynch::clients::exceptions::XRPLWebsocketException;
 use crate::models::Model;
-use crate::Err;
 use anyhow::Result;
 use em_as_net::client::websocket::ReadResult;
 use serde::Serialize;
@@ -10,11 +8,11 @@ use serde::Serialize;
 pub trait WebsocketBase<'a>: Client<'a> {
     fn is_open(&self) -> bool;
 
-    async fn do_open(&mut self) -> Result<()>;
+    async fn do_open(&self) -> Result<()>;
 
-    async fn do_close(&mut self) -> Result<()>;
+    async fn do_close(&self) -> Result<()>;
 
-    async fn do_write<T: Model + Serialize>(&mut self, request: T) -> Result<()>;
+    async fn do_write<T: Model + Serialize>(&self, request: T) -> Result<()>;
 
     async fn do_read(&'a mut self) -> Result<Option<ReadResult<'a>>>;
 

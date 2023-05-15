@@ -1,13 +1,17 @@
-pub use if_std::AsyncWebsocketClient;
-
 use crate::asynch::clients::exceptions::XRPLWebsocketException;
 use crate::asynch::clients::websocket_base::WebsocketBase;
 use crate::models::Model;
 use crate::Err;
 use anyhow::Result;
-pub use em_as_net::client::websocket::ReadResult;
 use serde::Serialize;
 
+// exports
+#[cfg(feature = "std")]
+pub use if_std::AsyncWebsocketClient;
+
+pub use em_as_net::client::websocket::ReadResult;
+
+#[cfg(feature = "std")]
 mod if_std {
     use crate::asynch::clients::async_client::AsyncClient;
     use crate::asynch::clients::client::Client;
@@ -56,7 +60,7 @@ mod if_std {
             }
         }
 
-        async fn do_open(&mut self) -> Result<()> {
+        async fn do_open(&self) -> Result<()> {
             return match self.inner.borrow_mut().as_mut() {
                 None => {
                     Err!(XRPLWebsocketException::NotOpen)
@@ -69,7 +73,7 @@ mod if_std {
             };
         }
 
-        async fn do_close(&mut self) -> Result<()> {
+        async fn do_close(&self) -> Result<()> {
             return match self.inner.borrow_mut().as_mut() {
                 None => {
                     Err!(XRPLWebsocketException::NotOpen)
@@ -82,7 +86,7 @@ mod if_std {
             };
         }
 
-        async fn do_write<T: Model + Serialize>(&mut self, request: T) -> Result<()> {
+        async fn do_write<T: Model + Serialize>(&self, request: T) -> Result<()> {
             return match self.inner.borrow_mut().as_mut() {
                 None => {
                     Err!(XRPLWebsocketException::NotOpen)
@@ -142,7 +146,7 @@ pub trait Websocket<'a>: WebsocketBase<'a> {
         }
     }
 
-    async fn close(&mut self) -> Result<()> {
+    async fn close(&self) -> Result<()> {
         if self.is_open() {
             self.do_close().await
         } else {
