@@ -65,11 +65,7 @@ mod if_std {
                 None => {
                     Err!(XRPLWebsocketException::NotOpen)
                 }
-                Some(ws) => {
-                    ws.connect(None).await;
-
-                    Ok(())
-                }
+                Some(ws) => ws.connect(None).await,
             };
         }
 
@@ -78,11 +74,7 @@ mod if_std {
                 None => {
                     Err!(XRPLWebsocketException::NotOpen)
                 }
-                Some(ws) => {
-                    ws.close().await;
-
-                    Ok(())
-                }
+                Some(ws) => ws.close().await,
             };
         }
 

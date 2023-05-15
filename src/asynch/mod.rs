@@ -1,2 +1,2 @@
-#[cfg(feature = "unstable-net")]
+#[cfg(feature = "net")]
 pub mod clients;
