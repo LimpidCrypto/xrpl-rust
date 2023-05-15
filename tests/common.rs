@@ -8,7 +8,6 @@ mod std_test {
         let mut buffer = [0u8; 4096];
         let uri = "ws://limpidcrypto.de:6004";
         let mut ws = AsyncWebsocketClient::new(uri.into(), &mut buffer);
-
         // connect
         ws.open().await.unwrap();
         // send request
@@ -22,7 +21,7 @@ mod std_test {
             None,
         );
         ws.write(account_info).await.unwrap();
-
+        // read messages
         while let Ok(Some(ReadResult::Text(response))) = ws.read().await {
             println!("{:?}", response);
 
