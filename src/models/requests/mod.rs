@@ -25,6 +25,7 @@ pub mod no_ripple_check;
 pub mod path_find;
 pub mod ping;
 pub mod random;
+pub mod responses;
 pub mod ripple_path_find;
 pub mod server_info;
 pub mod server_state;

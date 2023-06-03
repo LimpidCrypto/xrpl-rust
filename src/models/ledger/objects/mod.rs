@@ -57,3 +57,7 @@ pub enum LedgerEntryType {
     SignerList = 0x0053,
     Ticket = 0x0054,
 }
+
+pub trait LedgerObject {
+    fn get_ledger_object_type(&self) -> LedgerEntryType;
+}

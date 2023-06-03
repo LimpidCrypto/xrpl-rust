@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -69,6 +69,12 @@ impl<'a> Default for NFTokenPage<'a> {
 }
 
 impl<'a> Model for NFTokenPage<'a> {}
+
+impl<'a> LedgerObject for NFTokenPage<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> NFTokenPage<'a> {
     pub fn new(

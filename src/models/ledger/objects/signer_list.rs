@@ -1,5 +1,5 @@
 use crate::_serde::lgr_obj_flags;
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 
@@ -47,10 +47,10 @@ serde_with_tag! {
 pub struct SignerList<'a> {
     /// The value 0x0053, mapped to the string SignerList, indicates that this object is a
     /// SignerList object.
-    ledger_entry_type: LedgerEntryType,
+    pub ledger_entry_type: LedgerEntryType,
     /// A bit-map of Boolean flags enabled for this signer list.
     #[serde(with = "lgr_obj_flags")]
-    flags: Vec<SignerListFlag>,
+    pub flags: Vec<SignerListFlag>,
     /// The object ID of a single object to retrieve from the ledger, as a
     /// 64-character (256-bit) hexadecimal string.
     #[serde(rename = "index")]
@@ -94,6 +94,12 @@ impl<'a> Default for SignerList<'a> {
 }
 
 impl<'a> Model for SignerList<'a> {}
+
+impl<'a> LedgerObject for SignerList<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> SignerList<'a> {
     pub fn new(

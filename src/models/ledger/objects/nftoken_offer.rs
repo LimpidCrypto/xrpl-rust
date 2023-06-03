@@ -1,5 +1,5 @@
 use crate::_serde::lgr_obj_flags;
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::Amount, Model};
 use alloc::borrow::Cow;
 
@@ -91,6 +91,12 @@ impl<'a> Default for NFTokenOffer<'a> {
 }
 
 impl<'a> Model for NFTokenOffer<'a> {}
+
+impl<'a> LedgerObject for NFTokenOffer<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> NFTokenOffer<'a> {
     pub fn new(

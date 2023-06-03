@@ -1,5 +1,5 @@
 use crate::_serde::lgr_obj_flags;
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::Amount, Model};
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -44,10 +44,10 @@ pub enum RippleStateFlag {
 pub struct RippleState<'a> {
     /// The value 0x0072, mapped to the string RippleState, indicates that this object
     /// is a RippleState object.
-    ledger_entry_type: LedgerEntryType,
+    pub ledger_entry_type: LedgerEntryType,
     /// A bit-map of boolean options enabled for this object.
     #[serde(with = "lgr_obj_flags")]
-    flags: Vec<RippleStateFlag>,
+    pub flags: Vec<RippleStateFlag>,
     /// The object ID of a single object to retrieve from the ledger, as a
     /// 64-character (256-bit) hexadecimal string.
     #[serde(rename = "index")]
@@ -109,6 +109,12 @@ impl<'a> Default for RippleState<'a> {
 }
 
 impl<'a> Model for RippleState<'a> {}
+
+impl<'a> LedgerObject for RippleState<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> RippleState<'a> {
     pub fn new(

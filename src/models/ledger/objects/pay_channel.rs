@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::Amount, Model};
 use alloc::borrow::Cow;
 
@@ -16,10 +16,10 @@ use serde_with::skip_serializing_none;
 pub struct PayChannel<'a> {
     /// The value `0x0078`, mapped to the string `PayChannel`, indicates that this object is a
     /// payment channel object.
-    ledger_entry_type: LedgerEntryType,
+    pub ledger_entry_type: LedgerEntryType,
     /// A bit-map of boolean flags enabled for this object. Currently, the protocol defines
     /// no flags for PayChannel objects. The value is always 0.
-    flags: u32,
+    pub flags: u32,
     /// The object ID of a single object to retrieve from the ledger, as a
     /// 64-character (256-bit) hexadecimal string.
     #[serde(rename = "index")]
@@ -91,6 +91,12 @@ impl<'a> Default for PayChannel<'a> {
 }
 
 impl<'a> Model for PayChannel<'a> {}
+
+impl<'a> LedgerObject for PayChannel<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> PayChannel<'a> {
     pub fn new(

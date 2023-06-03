@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -48,6 +48,12 @@ pub struct Amendments<'a> {
 }
 
 impl<'a> Model for Amendments<'a> {}
+
+impl<'a> LedgerObject for Amendments<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> Default for Amendments<'a> {
     fn default() -> Self {

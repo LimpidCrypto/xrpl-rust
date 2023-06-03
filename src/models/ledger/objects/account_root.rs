@@ -1,5 +1,5 @@
 use crate::_serde::lgr_obj_flags;
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::XRPAmount, Model};
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -147,6 +147,12 @@ impl<'a> Default for AccountRoot<'a> {
 }
 
 impl<'a> Model for AccountRoot<'a> {}
+
+impl<'a> LedgerObject for AccountRoot<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> AccountRoot<'a> {
     pub fn new(

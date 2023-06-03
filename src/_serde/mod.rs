@@ -309,3 +309,40 @@ macro_rules! serde_with_tag {
         }
     };
 }
+
+pub(crate) mod vec_of_generic_impl_serde {
+    use alloc::vec;
+    use alloc::vec::Vec;
+    use serde::{ser, Serialize, Serializer};
+    use serde_json::Value;
+
+    pub fn serialize<T, S>(v: &Vec<T>, s: S) -> Result<S::Ok, S::Error>
+        where
+            T: Serialize,
+            S: Serializer,
+    {
+        let mut vec_of_serialized = vec![];
+        for item in v.iter() {
+            let ser = item.serialize(s.)?;
+            vec_of_serialized.push(ser);
+        }
+
+        let type_value_result: Result<Value, serde_json::Error> = serde_json::to_value(flags);
+        match type_value_result {
+            Ok(type_as_value) => {
+                let flag_vec_result: Result<Vec<u32>, serde_json::Error> =
+                    serde_json::from_value(type_as_value);
+                match flag_vec_result {
+                    Ok(flags_vec) => s.serialize_u32(flags_vec.iter().sum()),
+                    Err(_) => {
+                        // TODO: Find a way to use custom errors
+                        Err(ser::Error::custom("SerdeIntermediateStepError: Failed to turn flags into `Vec<u32>` during serialization"))
+                    }
+                }
+            }
+            Err(_) => Err(ser::Error::custom(
+                "SerdeIntermediateStepError: Failed to turn flags into `Value` during serialization",
+            )),
+        }
+    }
+}

@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::Amount, Currency, Model};
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -102,6 +102,12 @@ impl<'a> Default for AMM<'a> {
 }
 
 impl<'a> Model for AMM<'a> {}
+
+impl<'a> LedgerObject for AMM<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> AMM<'a> {
     pub fn new(

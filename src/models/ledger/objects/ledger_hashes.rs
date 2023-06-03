@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -54,6 +54,12 @@ impl<'a> Default for LedgerHashes<'a> {
 }
 
 impl<'a> Model for LedgerHashes<'a> {}
+
+impl<'a> LedgerObject for LedgerHashes<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> LedgerHashes<'a> {
     pub fn new(

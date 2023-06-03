@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::{amount::Amount, Model};
 use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
@@ -95,6 +95,12 @@ impl<'a> Default for Escrow<'a> {
 }
 
 impl<'a> Model for Escrow<'a> {}
+
+impl<'a> LedgerObject for Escrow<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> Escrow<'a> {
     pub fn new(

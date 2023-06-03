@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 
@@ -53,6 +53,12 @@ impl<'a> Default for Ticket<'a> {
 }
 
 impl<'a> Model for Ticket<'a> {}
+
+impl<'a> LedgerObject for Ticket<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> Ticket<'a> {
     pub fn new(

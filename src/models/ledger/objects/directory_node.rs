@@ -1,4 +1,4 @@
-use crate::models::ledger::LedgerEntryType;
+use crate::models::ledger::{LedgerEntryType, LedgerObject};
 use crate::models::Model;
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
@@ -82,6 +82,12 @@ impl<'a> Default for DirectoryNode<'a> {
 }
 
 impl<'a> Model for DirectoryNode<'a> {}
+
+impl<'a> LedgerObject for DirectoryNode<'a> {
+    fn get_ledger_object_type(&self) -> LedgerEntryType {
+        self.ledger_entry_type.clone()
+    }
+}
 
 impl<'a> DirectoryNode<'a> {
     pub fn new(
