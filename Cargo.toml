@@ -58,20 +58,25 @@ hashbrown = { version = "0.13.2", default-features = false, features = ["serde"]
 fnv = { version = "1.0.7", default-features = false }
 derive-new = { version = "0.5.9", default-features = false }
 thiserror-no-std = "2.0.2"
-anyhow = { version ="1.0.69", default-features = false }
+anyhow = { version = "1.0.69", default-features = false }
+futures = { version = "0.3.25", default-features = false }
+tokio = { version = "1.28.2", optional = true }
+tokio-tungstenite = { version = "0.19.0", optional = true }
+url = { version = "2.4.0", default-features = false, optional = true }
 
 [dev-dependencies]
 criterion = "0.4.0"
 cargo-husky = { version = "1.5.0", default-features = false, features = [
     "user-hooks",
 ] }
+tokio = { version = "1.28.2", features = ["full"] }
 
 [[bench]]
 name = "benchmarks"
 harness = false
 
 [features]
-default = ["std", "core", "models", "utils"]
+default = ["std", "core", "models", "utils", "websocket", "json-rpc"]
 models = ["core", "transactions", "requests", "ledger"]
 transactions = ["core", "amounts", "currencies"]
 requests = ["core", "amounts", "currencies"]
@@ -80,4 +85,10 @@ amounts = ["core"]
 currencies = ["core"]
 core = ["utils"]
 utils = []
-std = ["rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std"]
+websocket = [
+    "url",
+    "tokio-tungstenite/native-tls",
+    "tokio/net",
+]
+json-rpc = []
+std = ["rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std", "futures/std"]
