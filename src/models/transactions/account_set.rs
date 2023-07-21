@@ -5,7 +5,6 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::skip_serializing_none;
 use strum_macros::{AsRefStr, Display, EnumIter};
 
-use alloc::string::ToString;
 
 use crate::models::amount::XRPAmount;
 use crate::models::transactions::XRPLAccountSetException;
@@ -387,7 +386,7 @@ impl<'a> AccountSetError for AccountSet<'a> {
 }
 
 impl<'a> AccountSet<'a> {
-    fn new(
+    pub fn new(
         account: &'a str,
         fee: Option<XRPAmount<'a>>,
         sequence: Option<u32>,
