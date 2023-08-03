@@ -1,3 +1,4 @@
+use core::fmt::Debug;
 use thiserror_no_std::Error;
 use tokio_tungstenite::tungstenite;
 
@@ -5,7 +6,7 @@ use tokio_tungstenite::tungstenite;
 pub enum XRPLWebsocketException {
     #[cfg(feature = "std")]
     #[error("Tungstenite: `{0:?}`")]
-    Tungstenite(tungstenite::Error)
+    Tungstenite(tungstenite::Error),
 }
 
 #[cfg(feature = "std")]

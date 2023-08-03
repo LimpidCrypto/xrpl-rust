@@ -29,14 +29,14 @@ ed25519-dalek = "1.0.1"
 secp256k1 = { version = "0.27.0", default-features = false, features = [
     "alloc",
 ] }
-bs58 = { version = "0.4.0", default-features = false, features = [
+bs58 = { version = "0.5.0", default-features = false, features = [
     "check",
     "alloc",
 ] }
-indexmap = { version = "1.7.0", features = ["serde"] }
+indexmap = { version = "2.0.0", features = ["serde"] }
 regex = { version = "1.5.4", default-features = false }
-strum = { version = "0.24.1", default-features = false }
-strum_macros = { version = "0.24.2", default-features = false }
+strum = { version = "0.25.0", default-features = false }
+strum_macros = { version = "0.25.1", default-features = false }
 crypto-bigint = { version = "0.5.1" }
 rust_decimal = { version = "1.17.0", default-features = false, features = [
     "serde",
@@ -47,25 +47,26 @@ chrono = { version = "0.4.19", default-features = false, features = [
 ] }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 rand = { version = "0.8.4", default-features = false, features = ["getrandom"] }
-serde = { version = "1.0.130", default-features = false, features = ["derive"] }
+serde = { version = "^1.0.130", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.68", default-features = false, features = [
     "alloc",
 ] }
-serde_with = "2.3.1"
+serde_with = "3.1.0"
 serde_repr = "0.1"
 zeroize = "1.5.7"
-hashbrown = { version = "0.13.2", default-features = false, features = ["serde"] }
+hashbrown = { version = "0.14.0", default-features = false, features = ["serde"] }
 fnv = { version = "1.0.7", default-features = false }
 derive-new = { version = "0.5.9", default-features = false }
 thiserror-no-std = "2.0.2"
 anyhow = { version = "1.0.69", default-features = false }
 futures = { version = "0.3.25", default-features = false }
 tokio = { version = "1.28.2", optional = true }
-tokio-tungstenite = { version = "0.19.0", optional = true }
+tokio-util = { version = "0.7.8", optional = true, features = ["codec"] }
+tokio-tungstenite = { version = "0.20.0", optional = true }
 url = { version = "2.4.0", default-features = false, optional = true }
 
 [dev-dependencies]
-criterion = "0.4.0"
+criterion = "0.5.1"
 cargo-husky = { version = "1.5.0", default-features = false, features = [
     "user-hooks",
 ] }
@@ -87,8 +88,21 @@ core = ["utils"]
 utils = []
 websocket = [
     "url",
-    "tokio-tungstenite/native-tls",
-    "tokio/net",
 ]
 json-rpc = []
-std = ["rand/std", "regex/std", "chrono/std", "rand/std_rng", "hex/std", "rust_decimal/std", "bs58/std", "serde/std", "indexmap/std", "secp256k1/std", "futures/std"]
+std = [
+    "rand/std",
+    "regex/std",
+    "chrono/std",
+    "rand/std_rng",
+    "hex/std",
+    "rust_decimal/std",
+    "bs58/std",
+    "serde/std",
+    "indexmap/std",
+    "secp256k1/std",
+    "futures/std",
+    "tokio-tungstenite/native-tls",
+    "tokio/net",
+    "tokio-util",
+]

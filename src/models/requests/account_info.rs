@@ -80,3 +80,38 @@ impl<'a> AccountInfo<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod test_serde {
+    use alloc::string::ToString;
+
+    use super::*;
+
+    #[test]
+    fn test_account_info() {
+        let account_info_json = r#"{
+            "account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
+            "ledger_index": "current",
+            "strict": true,
+            "queue": true,
+            "signer_lists": true,
+            "command": "account_info"
+        }"#;
+        let account_info_json_string = account_info_json.to_string();
+
+        let account_info = AccountInfo::new(
+            "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
+            None,
+            None,
+            Some("current"),
+            Some(true),
+            Some(true),
+            Some(true),
+        );
+
+        assert_eq!(
+            account_info_json_string.replace(" ", "").replace("\n", ""),
+            serde_json::to_string(&account_info).unwrap()
+        );
+    }
+}

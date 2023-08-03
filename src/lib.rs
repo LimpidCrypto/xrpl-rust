@@ -19,6 +19,7 @@
 //! [XRP Ledger](https://xrpl.org/docs.html).
 #![no_std]
 #![allow(dead_code)] // Remove eventually
+#![feature(async_fn_in_trait)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -40,3 +41,4 @@ pub extern crate serde_json;
 
 mod _anyhow;
 mod _serde;
+pub mod asynch;

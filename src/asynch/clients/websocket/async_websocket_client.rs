@@ -1,28 +1,29 @@
+use crate::asynch::clients::websocket::XRPLWebsocketException;
+use crate::models::Model;
+use crate::Err;
+use anyhow::Result;
 use core::marker::PhantomData;
 use core::pin::Pin;
-use anyhow::Result;
 use futures::{Sink, TryStreamExt};
 use serde::Serialize;
-use tokio_tungstenite::{connect_async};
+use tokio_tungstenite::connect_async;
 use url::Url;
-use crate::asynch::clients::websocket::XRPLWebsocketException;
-use crate::Err;
-use crate::models::Model;
 
 #[cfg(feature = "std")]
 pub use tokio::net::TcpStream;
 #[cfg(feature = "std")]
-pub use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::Message};
+pub use tokio_tungstenite::{tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 #[cfg(feature = "std")]
-pub type AsyncWebsocketClientTokio<Status> = AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Status>;
+pub type AsyncWebsocketClientTokio<Status> =
+    AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Status>;
 
 pub struct Open;
 pub struct Closed;
 
 pub struct AsyncWebsocketClient<T, Status = Closed> {
     inner: T,
-    status: PhantomData<Status>
+    status: PhantomData<Status>,
 }
 
 impl<T, Status> AsyncWebsocketClient<T, Status> {
@@ -32,8 +33,12 @@ impl<T, Status> AsyncWebsocketClient<T, Status> {
 }
 
 #[cfg(feature = "std")]
-impl WebsocketOpen<WebSocketStream<MaybeTlsStream<TcpStream>>> for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Closed> {
-    async fn open(uri: Url) -> Result<AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Open>> {
+impl WebsocketOpen<WebSocketStream<MaybeTlsStream<TcpStream>>>
+    for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Closed>
+{
+    async fn open(
+        uri: Url,
+    ) -> Result<AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Open>> {
         let (websocket_stream, _) = connect_async(uri.clone()).await.unwrap();
 
         Ok(AsyncWebsocketClient {
@@ -50,7 +55,7 @@ impl WebsocketIO for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStre
         let message = Message::Text(request_as_string);
         match Pin::new(&mut self.inner).start_send(message) {
             Ok(()) => Ok(()),
-            Err(ws_error) => Err!(XRPLWebsocketException::Tungstenite(ws_error))
+            Err(ws_error) => Err!(XRPLWebsocketException::Tungstenite(ws_error)),
         }
     }
 
@@ -64,7 +69,9 @@ impl WebsocketIO for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStre
 }
 
 #[cfg(feature = "std")]
-impl WebsocketClose<WebSocketStream<MaybeTlsStream<TcpStream>>> for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Open> {
+impl WebsocketClose<WebSocketStream<MaybeTlsStream<TcpStream>>>
+    for AsyncWebsocketClient<WebSocketStream<MaybeTlsStream<TcpStream>>, Open>
+{
     async fn close(mut self) -> Result<()> {
         match self.inner.close(None).await {
             Ok(()) => Ok(()),
